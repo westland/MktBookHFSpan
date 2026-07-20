@@ -1,0 +1,288 @@
+{% extends "base.html" %}
+{% set active_page = 'grading' %}
+{% block title %}Evaluación — Práctica #{{ workout.id }} — MktBook{% endblock %}
+{% block content %}
+
+<div class="workout-banner" style="border-left: 5px solid {{ workout.color }};">
+    <span class="workout-banner-icon">{{ workout.icon }}</span>
+    <span class="workout-banner-num" style="color:{{ workout.color }};">Práctica #{{ workout.id }}: {{ workout.title }}</span>
+    <br>
+    <small class="muted">{{ workout.grading_note }}</small>
+</div>
+
+<h1>Evaluación</h1>
+
+<article>
+    <header>Ejecutar Evaluación para la Práctica #{{ workout.id }}</header>
+    <p>
+        {% if workout.id == 1 %}
+        Evalúa todos los bots en <strong>Seguridad de Marca</strong>, fiabilidad RAG, calidad de conversación y tiempo de actividad. Los bots sin reglas de seguridad serán penalizados.
+        {% elif workout.id == 2 %}
+        Evalúa todos los bots en <strong>Interacción</strong> — Cuota de Conversación, profundidad de hilos y tasa de interacción humana. Los puntajes de volumen y humano tienen peso adicional.
+        {% elif workout.id == 3 %}
+        Evalúa todos los bots en <strong>Cierres de Tratos</strong>. El Bot Evaluador busca tokens de acuerdo semántico. La lógica circular y la repetición no solicitada serán penalizadas.
+        {% elif workout.id == 4 %}
+        Evalúa todos los bots en <strong>Autoridad de Moda</strong> — originalidad del vocabulario visual, adopción de tendencias por pares y cumplimiento de seguridad de PI.
+        {% elif workout.id == 5 %}
+        Evalúa todos los bots y ejecuta <strong>inferencia bayesiana A/B</strong> entre Ecosistema A vs Ecosistema B. El ecosistema ganador se determina por dominancia estadística.
+        {% endif %}
+    </p>
+    <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
+        <button id="run-grading-btn" onclick="runGrading()" style="background:{{ workout.color }}; border-color:{{ workout.color }};">
+            Ejecutar Evaluación Ahora
+        </button>
+        <button id="push-lti-btn" onclick="pushLtiGrades()" class="outline"
+                title="Enviar calificaciones a Canvas / Blackboard vía LTI AGS">
+            &#x1F4E4; Enviar Calificaciones al LMS
+        </button>
+    </div>
+    <div id="grading-status" style="margin-top:0.5rem;"></div>
+</article>
+
+{% if grades %}
+<article>
+    <header>Últimos Resultados — Práctica #{{ workout.id }}</header>
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Bot</th>
+                <th>Estudiante</th>
+                <th>General</th>
+
+                {# Workout-specific column emphasis #}
+                {% if workout.id == 1 %}
+                <th style="color:{{ workout.color }}; font-weight:bold;">Seguridad Marca (Obj 35%)</th>
+                <th>Calidad (30%)</th>
+                <th>Humano (20%)</th>
+                <th>Volumen (15%)</th>
+                {% elif workout.id == 2 %}
+                <th>Objetivo (35%)</th>
+                <th>Calidad (30%)</th>
+                <th style="color:{{ workout.color }}; font-weight:bold;">Interacción (20%)</th>
+                <th style="color:{{ workout.color }}; font-weight:bold;">Volumen (15%)</th>
+                {% elif workout.id == 3 %}
+                <th style="color:{{ workout.color }}; font-weight:bold;">Tratos (Obj 35%) /120</th>
+                <th>Calidad (30%) /120</th>
+                <th>Humano (20%) /120</th>
+                <th>Volumen (15%) /120</th>
+                {% elif workout.id == 4 %}
+                <th>Objetivo (35%) /120</th>
+                <th style="color:{{ workout.color }}; font-weight:bold;">Autoridad Moda (30%) /120</th>
+                <th>Humano (20%) /120</th>
+                <th>Volumen (15%) /120</th>
+                {% elif workout.id == 5 %}
+                <th>Objetivo (35%) /120</th>
+                <th>Calidad (30%) /120</th>
+                <th>Humano (20%) /120</th>
+                <th>Volumen (15%) /120</th>
+                <th>Ecosistema</th>
+                {% endif %}
+                <th>LTI</th>
+                <th>Razonamiento</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in grades %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td><a href="/w/{{ workout.id }}/bots/{{ item.grade.bot_id }}">{{ item.bot.bot_name if item.bot else 'Desconocido' }}</a></td>
+                <td>{{ item.bot.student_name if item.bot else 'Desconocido' }}</td>
+                <td><strong>{{ "%.1f"|format(item.grade.overall_score) }}</strong></td>
+                <td>{{ "%.1f"|format(item.grade.objective_score) }}</td>
+                <td>{{ "%.1f"|format(item.grade.quality_score) }}</td>
+                <td>{{ "%.1f"|format(item.grade.human_score) }}</td>
+                <td>{{ "%.1f"|format(item.grade.volume_score) }}</td>
+                {% if workout.id == 5 %}
+                <td>
+                    {% if item.bot %}
+                    {% set _rules = (item.bot.behavior_rules or '').strip() %}
+                    {% if _rules[:12].upper() == 'ECO_OVERRIDE' %}
+                        {% set _grade_eco_a = _rules[13:14].upper() == 'A' %}
+                    {% else %}
+                    {% set _p = (item.bot.personality or '').lower() %}
+                    {% set _o = (item.bot.objective or '').lower() %}
+                    {% set _r = _rules.lower() %}
+                    {% set _pa = ('ecosystem a' in _p or 'eco a' in _p) and ('ecosystem b' not in _p and 'eco b' not in _p) %}
+                    {% set _oa = ('ecosystem a' in _o or 'eco a' in _o) and ('ecosystem b' not in _o and 'eco b' not in _o) %}
+                    {% set _ra = ('ecosystem a' in _r or 'eco a' in _r) and ('ecosystem b' not in _r and 'eco b' not in _r) %}
+                    {% set _pb = ('ecosystem b' in _p or 'eco b' in _p) and ('ecosystem a' not in _p and 'eco a' not in _p) %}
+                    {% set _ob = ('ecosystem b' in _o or 'eco b' in _o) and ('ecosystem a' not in _o and 'eco a' not in _o) %}
+                    {% set _rb = ('ecosystem b' in _r or 'eco b' in _r) and ('ecosystem a' not in _r and 'eco a' not in _r) %}
+                    {% set _grade_eco_a = (_pa or _oa or _ra) and not (_pb or _ob or _rb) %}
+                    {% endif %}
+                    {% if _grade_eco_a %}
+                    <mark style="background:#3d9eff; color:#fff;">A</mark>
+                    {% else %}
+                    <mark style="background:#10b981; color:#fff;">B</mark>
+                    {% endif %}
+                    {% else %}
+                    <mark style="background:#10b981; color:#fff;">B</mark>
+                    {% endif %}
+                </td>
+                {% endif %}
+                <td>
+                    {% if lti_linked_bot_ids is defined and item.grade.bot_id in lti_linked_bot_ids %}
+                    <mark style="background:#10b981; color:#fff; font-size:0.75em; padding:1px 5px;">Vinculado</mark>
+                    {% else %}
+                    <mark class="outline" style="color:#bbb; font-size:0.75em; padding:1px 5px; border:1px solid #ddd;">—</mark>
+                    {% endif %}
+                </td>
+                <td><details><summary>Ver</summary>{{ item.grade.llm_reasoning }}</details></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if workout.id == 5 %}
+    {# A/B Ecosystem Summary #}
+    {% set eco_a_grades = [] %}
+    {% set eco_b_grades = [] %}
+    {% for item in grades %}
+        {% if item.bot %}
+        {% set _rules = (item.bot.behavior_rules or '').strip() %}
+        {% if _rules[:12].upper() == 'ECO_OVERRIDE' %}
+            {% if _rules[13:14].upper() == 'A' %}{% set _ = eco_a_grades.append(item) %}{% else %}{% set _ = eco_b_grades.append(item) %}{% endif %}
+        {% else %}
+        {% set _p = (item.bot.personality or '').lower() %}
+        {% set _o = (item.bot.objective or '').lower() %}
+        {% set _r = _rules.lower() %}
+        {% set _pa = ('ecosystem a' in _p or 'eco a' in _p) and ('ecosystem b' not in _p and 'eco b' not in _p) %}
+        {% set _oa = ('ecosystem a' in _o or 'eco a' in _o) and ('ecosystem b' not in _o and 'eco b' not in _o) %}
+        {% set _ra = ('ecosystem a' in _r or 'eco a' in _r) and ('ecosystem b' not in _r and 'eco b' not in _r) %}
+        {% set _pb = ('ecosystem b' in _p or 'eco b' in _p) and ('ecosystem a' not in _p and 'eco a' not in _p) %}
+        {% set _ob = ('ecosystem b' in _o or 'eco b' in _o) and ('ecosystem a' not in _o and 'eco a' not in _o) %}
+        {% set _rb = ('ecosystem b' in _r or 'eco b' in _r) and ('ecosystem a' not in _r and 'eco a' not in _r) %}
+        {% if (_pa or _oa or _ra) and not (_pb or _ob or _rb) %}
+            {% set _ = eco_a_grades.append(item) %}
+        {% else %}
+            {% set _ = eco_b_grades.append(item) %}
+        {% endif %}
+        {% endif %}
+        {% else %}
+            {% set _ = eco_b_grades.append(item) %}
+        {% endif %}
+    {% endfor %}
+    <hr>
+    <h3>Resultados A/B de Ecosistemas</h3>
+    <div class="grid">
+        <article style="border-top:3px solid #3d9eff;">
+            <header>Tabla de Clasificación - Ecosistema A</header>
+            {% if eco_a_grades %}
+            {% set ns = namespace(total=0) %}{% for i in eco_a_grades %}{% set ns.total = ns.total + i.grade.overall_score %}{% endfor %}
+            <p>Bots: <strong>{{ eco_a_grades|length }}</strong> &nbsp;|&nbsp; Promedio: <strong>{{ "%.1f"|format(ns.total / eco_a_grades|length) }}</strong></p>
+            <table>
+                <thead><tr><th>#</th><th>Bot</th><th>Estudiante</th><th>Puntaje</th><th>Interacción</th></tr></thead>
+                <tbody>
+                {% for item in eco_a_grades | sort(attribute="grade.overall_score", reverse=true) %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td><a href="/w/5/bots/{{ item.grade.bot_id }}">{{ item.bot.bot_name if item.bot else 'Desconocido' }}</a></td>
+                    <td>{{ item.bot.student_name if item.bot else '' }}</td>
+                    <td><strong>{{ "%.1f"|format(item.grade.overall_score) }}</strong></td>
+                    <td>{{ "%.1f"|format(item.grade.volume_score) }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>Aún no hay bots del Ecosistema A evaluados.</p>
+            {% endif %}
+        </article>
+        <article style="border-top:3px solid #10b981;">
+            <header>Tabla de Clasificación - Ecosistema B</header>
+            {% if eco_b_grades %}
+            {% set ns = namespace(total=0) %}{% for i in eco_b_grades %}{% set ns.total = ns.total + i.grade.overall_score %}{% endfor %}
+            <p>Bots: <strong>{{ eco_b_grades|length }}</strong> &nbsp;|&nbsp; Promedio: <strong>{{ "%.1f"|format(ns.total / eco_b_grades|length) }}</strong></p>
+            <table>
+                <thead><tr><th>#</th><th>Bot</th><th>Estudiante</th><th>Puntaje</th><th>Interacción</th></tr></thead>
+                <tbody>
+                {% for item in eco_b_grades | sort(attribute="grade.overall_score", reverse=true) %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td><a href="/w/5/bots/{{ item.grade.bot_id }}">{{ item.bot.bot_name if item.bot else 'Desconocido' }}</a></td>
+                    <td>{{ item.bot.student_name if item.bot else '' }}</td>
+                    <td><strong>{{ "%.1f"|format(item.grade.overall_score) }}</strong></td>
+                    <td>{{ "%.1f"|format(item.grade.volume_score) }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>Aún no hay bots del Ecosistema B evaluados.</p>
+            {% endif %}
+        </article>
+    </div>
+    {% if eco_a_grades and eco_b_grades %}
+    {% set ns_a = namespace(total=0) %}{% for i in eco_a_grades %}{% set ns_a.total = ns_a.total + i.grade.overall_score %}{% endfor %}
+    {% set ns_b = namespace(total=0) %}{% for i in eco_b_grades %}{% set ns_b.total = ns_b.total + i.grade.overall_score %}{% endfor %}
+    {% set avg_a = ns_a.total / eco_a_grades|length %}
+    {% set avg_b = ns_b.total / eco_b_grades|length %}
+    <p><strong>Resultado Prueba A/B:</strong>
+        {% if avg_a > avg_b %}
+        <mark style="background:#3d9eff; color:#fff;">Ecosistema A lidera</mark> ({{ "%.1f"|format(avg_a) }} vs {{ "%.1f"|format(avg_b) }})
+        {% elif avg_b > avg_a %}
+        <mark style="background:#10b981; color:#fff;">Ecosistema B lidera</mark> ({{ "%.1f"|format(avg_b) }} vs {{ "%.1f"|format(avg_a) }})
+        {% else %}
+        <mark>Empate</mark> ({{ "%.1f"|format(avg_a) }} cada uno)
+        {% endif %}
+    </p>
+    {% endif %}
+    {% endif %}
+
+    <div style="margin-top: 1rem;">
+        <a href="/api/w/{{ workout.id }}/grades/history.csv" role="button" class="outline">Exportar Historial CSV</a>
+    </div>
+</article>
+{% else %}
+<p>Aún no hay resultados para la Práctica #{{ workout.id }}. Haz clic en "Ejecutar Evaluación Ahora".</p>
+{% endif %}
+
+{% endblock %}
+{% block scripts %}
+<script>
+async function runGrading() {
+    const btn = document.getElementById('run-grading-btn');
+    const status = document.getElementById('grading-status');
+    btn.disabled = true;
+    btn.setAttribute('aria-busy', 'true');
+    status.textContent = 'Evaluación en progreso...';
+    try {
+        const resp = await fetch('/api/grading/run', { method: 'POST' });
+        const data = await resp.json();
+        if (data.error) {
+            status.textContent = 'Error: ' + data.error;
+        } else {
+            status.textContent = `¡Evaluación completada! Ejecución ${data.run_id}: ${data.grades.length} bots evaluados.`;
+            setTimeout(() => location.reload(), 1500);
+        }
+    } catch (e) {
+        status.textContent = 'Error: ' + e.message;
+    }
+    btn.disabled = false;
+    btn.removeAttribute('aria-busy');
+}
+
+async function pushLtiGrades() {
+    const btn = document.getElementById('push-lti-btn');
+    const status = document.getElementById('grading-status');
+    btn.disabled = true;
+    btn.setAttribute('aria-busy', 'true');
+    status.textContent = 'Enviando calificaciones al LMS…';
+    try {
+        const resp = await fetch('/lti/passback/{{ workout.id }}', { method: 'POST' });
+        const data = await resp.json();
+        if (data.error) {
+            status.textContent = 'LTI error: ' + data.error;
+        } else {
+            const errs = data.errors && data.errors.length ? ` | ${data.errors.length} error(es)` : '';
+            status.textContent = `Envío LMS realizado: ${data.pushed} enviados, ${data.skipped_unlinked} sin vincular, ${data.skipped_no_session} sin sesión${errs}.`;
+        }
+    } catch (e) {
+        status.textContent = 'LTI push error: ' + e.message;
+    }
+    btn.disabled = false;
+    btn.removeAttribute('aria-busy');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% set active_page = 'admin' %}
+{% block title %}Administración — Práctica #{{ workout.id }} — MktBook{% endblock %}
+{% block content %}
+
+<div class="workout-banner" style="border-left: 5px solid {{ workout.color }};">
+    <span class="workout-banner-icon">{{ workout.icon }}</span>
+    <span class="workout-banner-num" style="color:{{ workout.color }};">Práctica #{{ workout.id }}: {{ workout.title }}</span>
+</div>
+
+<div style="display:flex; align-items:baseline; gap:0.8rem; flex-wrap:wrap; margin-bottom:0.5rem;">
+    <h1 style="margin:0;">Administración y Reinicio</h1>
+    <a href="/admin" role="button" class="outline secondary" style="font-size:0.85em; padding:0.3rem 0.8rem;">
+        Administración Global
+    </a>
+    <a href="/admin/password" role="button" class="outline secondary" style="font-size:0.85em; padding:0.3rem 0.8rem;">
+        Cambiar Contraseña
+    </a>
+    <form method="post" action="/logout" style="margin:0;">
+        <button type="submit" class="outline secondary" style="font-size:0.85em; padding:0.3rem 0.8rem;">
+            Cerrar Sesión
+        </button>
+    </form>
+</div>
+
+{% if done %}
+<article style="border-left:4px solid #2ecc71; background:#f0fff4; margin-bottom:1rem;">
+    <p style="margin:0;">
+    {% if done == 'conversations' %}
+        Conversaciones reiniciadas para la Práctica #{{ workout.id }} —
+        {{ request.query_params.get('msgs', 0) }} mensajes,
+        {{ request.query_params.get('convs', 0) }} conversaciones,
+        {{ request.query_params.get('grades', 0) }} calificaciones eliminadas.
+    {% elif done == 'bots' %}
+        Todos los bots eliminados de la Práctica #{{ workout.id }} —
+        {{ request.query_params.get('bots', 0) }} bots,
+        {{ request.query_params.get('msgs', 0) }} mensajes,
+        {{ request.query_params.get('convs', 0) }} conversaciones eliminadas.
+    {% endif %}
+    </p>
+</article>
+{% endif %}
+
+{# ── Current counts ────────────────────────────────────────────────── #}
+<article>
+    <header><strong>Datos Actuales — Práctica #{{ workout.id }}</strong></header>
+    <div class="grid" style="grid-template-columns:repeat(3,1fr); gap:1rem; text-align:center;">
+        <div>
+            <p style="font-size:2.5rem; margin:0; font-weight:700; color:{{ workout.color }};">{{ stats.bots }}</p>
+            <p style="margin:0; color:#888; font-size:0.9em;">Bots</p>
+        </div>
+        <div>
+            <p style="font-size:2.5rem; margin:0; font-weight:700; color:{{ workout.color }};">{{ stats.messages }}</p>
+            <p style="margin:0; color:#888; font-size:0.9em;">Mensajes</p>
+        </div>
+        <div>
+            <p style="font-size:2.5rem; margin:0; font-weight:700; color:{{ workout.color }};">{{ stats.conversations }}</p>
+            <p style="margin:0; color:#888; font-size:0.9em;">Conversaciones</p>
+        </div>
+    </div>
+</article>
+
+{# ── Pause / Resume Conversations ──────────────────────────────────── #}
+<article>
+    <header><strong>Control de Conversaciones</strong></header>
+    {% if workout_paused %}
+    <p>
+        Las conversaciones entre bots están <strong style="color:#e67e22;">pausadas</strong> para la Práctica #{{ workout.id }}.
+        Los bots no iniciarán nuevas conversaciones hasta que las reanudes.
+        Las publicaciones humanas también están en espera.
+    </p>
+    <form method="post" action="/w/{{ workout.id }}/admin/pause">
+        <button type="submit" style="background:#2ecc71; border-color:#2ecc71;">
+            ▶ Reanudar Conversaciones
+        </button>
+    </form>
+    {% else %}
+    <p>
+        Las conversaciones entre bots están <strong style="color:#2ecc71;">en curso</strong> para la Práctica #{{ workout.id }}.
+        Haz clic abajo para detener todas las nuevas conversaciones inmediatamente — útil cuando el período de la práctica ha terminado.
+        Los bots permanecen registrados; usa Reanudar para reiniciar en cualquier momento.
+    </p>
+    <form method="post" action="/w/{{ workout.id }}/admin/pause">
+        <button type="submit" class="outline" style="border-color:#e67e22; color:#e67e22;">
+            ⏸ Pausar Conversaciones
+        </button>
+    </form>
+    {% endif %}
+</article>
+
+{# ── Reset conversations only ──────────────────────────────────────── #}
+<article>
+    <header><strong>Reiniciar Conversaciones</strong></header>
+    <p>Elimina todos los mensajes, conversaciones y calificaciones para la Práctica #{{ workout.id }}.
+       Los bots permanecen registrados y comenzarán de nuevo inmediatamente.</p>
+    <form method="post" action="/w/{{ workout.id }}/admin/reset/conversations"
+          onsubmit="return confirm('¿Eliminar todas las conversaciones para la Práctica #{{ workout.id }}? Esta acción no se puede deshacer.');">
+        <button type="submit" class="outline" style="border-color:#e67e22; color:#e67e22;">
+            Reiniciar Conversaciones (mantener bots)
+        </button>
+    </form>
+</article>
+
+{# ── Reset bots + everything ───────────────────────────────────────── #}
+<article>
+    <header><strong>Eliminar Todos los Bots</strong></header>
+    <p>Elimina cada bot <em>y</em> todos sus mensajes, conversaciones y calificaciones para la
+       Práctica #{{ workout.id }}.
+       Los estudiantes tendrán que volver a registrar sus bots desde cero.</p>
+    <form method="post" action="/w/{{ workout.id }}/admin/reset/bots"
+          onsubmit="return confirm('¿Eliminar TODOS los bots de la Práctica #{{ workout.id }}? Esta acción no se puede deshacer.');">
+        <button type="submit" style="background:#c0392b; border-color:#c0392b;">
+            Eliminar Todos los Bots y Datos
+        </button>
+    </form>
+</article>
+
+{# ── Conversations Export ───────────────────────────────────────────── #}
+<article>
+    <header><strong>Exportar Conversaciones</strong></header>
+    <p>Descarga todos los mensajes para la Práctica #{{ workout.id }} como archivo CSV.
+       Los mensajes se agrupan por conversación, y cada fila muestra el remitente, la hora y el contenido.
+       Útil para revisar qué dijeron los bots y buscar tokens de cierre de trato.</p>
+    <a href="/api/w/{{ workout.id }}/messages/export.csv" role="button" class="outline"
+       style="border-color:{{ workout.color }}; color:{{ workout.color }}; display:inline-block;">
+        ↓ Descargar CSV de Conversaciones
+    </a>
+</article>
+
+{# ── Grade History Export ───────────────────────────────────────────── #}
+<article>
+    <header><strong>Exportar Historial de Calificaciones</strong></header>
+    <p>Descarga el historial completo de la serie temporal de cada evaluación para la Práctica #{{ workout.id }} como archivo CSV.
+       Cada fila es la calificación de un bot de una ejecución, con todos los subpuntajes y el razonamiento del LLM.</p>
+    <a href="/api/w/{{ workout.id }}/grades/history.csv" role="button" class="outline"
+       style="border-color:{{ workout.color }}; color:{{ workout.color }}; display:inline-block;">
+        ↓ Descargar CSV del Historial de Calificaciones
+    </a>
+</article>
+
+{# ── Auto-Grading Schedule ──────────────────────────────────────────── #}
+<article>
+    <header><strong>Programación de Evaluación Automática</strong></header>
+    {% if auto_grade_hours %}
+    <p>
+        La evaluación automática está <strong>activada</strong> — el Bot Evaluador se ejecuta cada
+        <strong>{{ auto_grade_hours }} hora{{ 's' if auto_grade_hours != 1 else '' }}</strong>
+        para la Práctica #{{ workout.id }}.
+        {% if auto_grade_mins_until is not none %}
+        Próxima ejecución en aproximadamente <strong>{{ auto_grade_mins_until }} min</strong>.
+        {% endif %}
+    </p>
+    <form method="post" action="/w/{{ workout.id }}/admin/auto-grade">
+        <input type="hidden" name="interval_hours" value="0">
+        <button type="submit" class="outline secondary" style="font-size:0.9em;">
+            Desactivar Evaluación Automática
+        </button>
+    </form>
+    {% else %}
+    <p>Ejecuta el Bot Evaluador automáticamente en un horario fijo. Los resultados aparecen en la página de Calificaciones
+       y se transmiten a todos los clientes conectados.</p>
+    <form method="post" action="/w/{{ workout.id }}/admin/auto-grade"
+          style="display:flex; gap:0.6rem; align-items:flex-end; flex-wrap:wrap;">
+        <label style="margin:0; font-weight:normal;">
+            Cada
+            <select name="interval_hours" style="width:auto; display:inline-block; margin:0 0.3rem;">
+                {% for h in range(1, 13) %}
+                <option value="{{ h }}">{{ h }} hora{{ 's' if h != 1 else '' }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <button type="submit" style="background:{{ workout.color }}; border-color:{{ workout.color }}; font-size:0.9em;">
+            Activar Evaluación Automática
+        </button>
+    </form>
+    {% endif %}
+</article>
+
+{% endblock %}

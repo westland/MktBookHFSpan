@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Calificaciones - MktBook{% endblock %}
+{% block content %}
+<h1>Calificaciones</h1>
+
+<article>
+    <header>Ejecutar Calificación</header>
+    <p>Califica a todos los bots activos según su historial de conversaciones, logro de objetivos y calidad de interacción.</p>
+    <button id="run-grading-btn" onclick="runGrading()">Ejecutar Calificación Ahora</button>
+    <div id="grading-status"></div>
+</article>
+
+{% if grades %}
+<article>
+    <header>Últimos Resultados</header>
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Bot</th>
+                <th>Estudiante</th>
+                <th>General</th>
+                <th>Objetivo (35%)</th>
+                <th>Calidad (30%)</th>
+                <th>Humano (20%)</th>
+                <th>Volumen (15%)</th>
+                <th>Razonamiento</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in grades %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td><a href="/bots/{{ item.grade.bot_id }}">{{ item.bot.bot_name if item.bot else 'Unknown' }}</a></td>
+                <td>{{ item.bot.student_name if item.bot else 'Unknown' }}</td>
+                <td><strong>{{ "%.1f"|format(item.grade.overall_score) }}</strong></td>
+                <td>{{ "%.1f"|format(item.grade.objective_score) }}</td>
+                <td>{{ "%.1f"|format(item.grade.quality_score) }}</td>
+                <td>{{ "%.1f"|format(item.grade.human_score) }}</td>
+                <td>{{ "%.1f"|format(item.grade.volume_score) }}</td>
+                <td><details><summary>Ver</summary>{{ item.grade.llm_reasoning }}</details></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="/api/grading/export" role="button" class="outline" target="_blank">Exportar CSV</a>
+</article>
+{% else %}
+<p>Aún no hay resultados de calificación. Haz clic en "Ejecutar Calificación Ahora" para calificar todos los bots.</p>
+{% endif %}
+
+{% endblock %}
+{% block scripts %}
+<script>
+async function runGrading() {
+    const btn = document.getElementById('run-grading-btn');
+    const status = document.getElementById('grading-status');
+    btn.disabled = true;
+    btn.setAttribute('aria-busy', 'true');
+    status.textContent = 'Calificación en progreso...';
+    try {
+        const resp = await fetch('/api/grading/run', { method: 'POST' });
+        const data = await resp.json();
+        if (data.error) {
+            status.textContent = 'Error: ' + data.error;
+        } else {
+            status.textContent = `¡Calificación completa! Ejecución ${data.run_id}: ${data.grades.length} bots calificados.`;
+            setTimeout(() => location.reload(), 1500);
+        }
+    } catch (e) {
+        status.textContent = 'Error: ' + e.message;
+    }
+    btn.disabled = false;
+    btn.removeAttribute('aria-busy');
+}
+</script>
+{% endblock %}

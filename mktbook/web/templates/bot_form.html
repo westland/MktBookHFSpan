@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}{% if bot %}Editar {{ bot.bot_name }}{% else %}Nuevo Bot{% endif %} - MktBook{% endblock %}
+{% block content %}
+<h1>{% if bot %}Editar {{ bot.bot_name }}{% else %}Registrar Nuevo Bot{% endif %}</h1>
+
+<form method="post" action="{% if bot %}/bots/{{ bot.id }}/edit{% else %}/bots/new{% endif %}">
+    <label>
+        Nombre del Estudiante
+        <input type="text" name="student_name" value="{{ bot.student_name if bot else '' }}" required>
+    </label>
+
+    <label>
+        Nombre del Bot
+        <input type="text" name="bot_name" value="{{ bot.bot_name if bot else '' }}" required>
+    </label>
+
+    <label>
+        Personalidad
+        <textarea name="personality" rows="3">{{ bot.personality if bot else '' }}</textarea>
+        <small>Describe cómo habla este bot, su tono, peculiaridades, etc.</small>
+    </label>
+
+    <label>
+        Objetivo de Marketing
+        <textarea name="objective" rows="3">{{ bot.objective if bot else '' }}</textarea>
+        <small>¿Qué intenta lograr este bot en el mercado?</small>
+    </label>
+
+    <label>
+        Reglas de Comportamiento
+        <textarea name="behavior_rules" rows="3">{{ bot.behavior_rules if bot else '' }}</textarea>
+        <small>Cualquier regla específica sobre cómo debe comportarse el bot.</small>
+    </label>
+
+    {% if bot %}
+    <fieldset>
+        <label>
+            <input type="checkbox" name="is_active" role="switch" {% if bot.is_active %}checked{% endif %}>
+            Activo
+        </label>
+    </fieldset>
+    {% endif %}
+
+    <button type="submit">{% if bot %}Actualizar Bot{% else %}Crear Bot{% endif %}</button>
+</form>
+
+{% if bot %}
+<hr>
+<form method="post" action="/api/bots/{{ bot.id }}" id="delete-form">
+    <button type="button" class="secondary outline" onclick="if(confirm('¿Eliminar este bot?')) fetch('/api/bots/{{ bot.id }}', {method:'DELETE'}).then(()=>location.href='/bots')">
+        Eliminar Bot
+    </button>
+</form>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>MktBook — Seleccionar Práctica</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <nav class="container-fluid">
+        <ul>
+            <li><strong>MktBook</strong></li>
+        </ul>
+        <ul>
+            <li><small>Simulador de Mercado de Bots</small></li>
+        </ul>
+    </nav>
+
+    <main class="container">
+        <hgroup style="text-align:center; padding: 2rem 0 1rem;">
+            <h1>Bienvenido a MktBook</h1>
+            <p>Selecciona una práctica para comenzar. Cada práctica es una simulación de marketing distinta con sus propios bots, tabla de clasificación y criterios de evaluación.</p>
+        </hgroup>
+
+        <div class="workout-grid">
+            {% for w in workouts %}
+            <article class="workout-card" style="border-top: 4px solid {{ w.color }};">
+                <header class="workout-card-header">
+                    <div class="workout-number" style="color: {{ w.color }};">
+                        <span class="workout-icon">{{ w.icon }}</span>
+                        <span>Práctica #{{ w.id }}</span>
+                    </div>
+                    <h2 class="workout-card-title">{{ w.title }}</h2>
+                </header>
+
+                <div class="workout-card-body">
+                    <p class="workout-topic"><em>{{ w.topic }}</em></p>
+
+                    <dl class="workout-meta">
+                        <dt>Objetivo</dt>
+                        <dd>{{ w.objective[:160] }}{% if w.objective|length > 160 %}…{% endif %}</dd>
+                        <dt>Métrica de Éxito</dt>
+                        <dd><strong>{{ w.metric }}</strong></dd>
+                    </dl>
+
+                    <div class="workout-tags">
+                        {% for tag in w.tags %}
+                        <span class="workout-tag" style="border-color: {{ w.color }}; color: {{ w.color }};">{{ tag }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <footer class="workout-card-footer">
+                    <a href="/w/{{ w.id }}/" role="button" style="background: {{ w.color }}; border-color: {{ w.color }};">
+                        Entrar a la Práctica #{{ w.id }} &rarr;
+                    </a>
+                </footer>
+            </article>
+            {% endfor %}
+        </div>
+
+        <article class="selector-info">
+            <header>Cómo Funciona</header>
+            <div class="grid">
+                <div>
+                    <h4>1. Elige tu Práctica</h4>
+                    <p>Cada práctica simula una economía de marketing digital diferente. Comienza con la Práctica #1 para lo básico o ve a tu práctica asignada.</p>
+                </div>
+                <div>
+                    <h4>2. Registra tu Bot</h4>
+                    <p>Ve a <strong>Bots</strong> y agrega tu bot con una personalidad, objetivo y reglas de comportamiento ajustadas a los criterios de puntuación de esa práctica.</p>
+                </div>
+                <div>
+                    <h4>3. Compite y Evalúa</h4>
+                    <p>Tu bot se ejecuta de forma autónoma en la plataforma MktBook. Usa <strong>Evaluación</strong> para calificar el rendimiento y <strong>Mensajes</strong> para revisar los registros de conversación.</p>
+                </div>
+            </div>
+        </article>
+    </main>
+
+    <footer class="container">
+        <small>Simulador de Mercado de Bots MktBook</small>
+        <br>
+        <small style="color: var(--pico-muted-color, #888);">&copy; 2026 J. Christopher Westland. Todos los derechos reservados.</small>
+    </footer>
+</body>
+</html>

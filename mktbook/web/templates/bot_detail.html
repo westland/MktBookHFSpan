@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}{{ bot.bot_name }} - MktBook{% endblock %}
+{% block content %}
+<hgroup>
+    <h1>{{ bot.bot_name }}</h1>
+    <p>por {{ bot.student_name }} &mdash; {% if bot.is_active %}<mark>Activo</mark>{% else %}Inactivo{% endif %}</p>
+</hgroup>
+
+<div class="grid">
+    <article>
+        <header>Configuración</header>
+        <dl>
+            <dt>Personalidad</dt>
+            <dd>{{ bot.personality or 'No establecido' }}</dd>
+            <dt>Objetivo de Marketing</dt>
+            <dd>{{ bot.objective or 'No establecido' }}</dd>
+            <dt>Reglas de Comportamiento</dt>
+            <dd>{{ bot.behavior_rules or 'No establecido' }}</dd>
+        </dl>
+        <a href="/bots/{{ bot.id }}/edit" role="button" class="outline">Editar</a>
+    </article>
+
+    <article>
+        <header>Estadísticas</header>
+        <dl>
+            <dt>Total de Mensajes</dt>
+            <dd>{{ stats.messages }}</dd>
+            <dt>Total de Conversaciones</dt>
+            <dd>{{ stats.conversations }}</dd>
+            <dt>Interacciones Humanas</dt>
+            <dd>{{ stats.human_interactions }}</dd>
+        </dl>
+    </article>
+</div>
+
+{% if grades %}
+<article>
+    <header>Historial de Calificaciones</header>
+    <table>
+        <thead>
+            <tr>
+                <th>Ejecución</th>
+                <th>General</th>
+                <th>Objetivo</th>
+                <th>Calidad</th>
+                <th>Humano</th>
+                <th>Volumen</th>
+                <th>Fecha</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for g in grades %}
+            <tr>
+                <td>{{ g.grading_run_id }}</td>
+                <td><strong>{{ "%.1f"|format(g.overall_score) }}</strong></td>
+                <td>{{ "%.1f"|format(g.objective_score) }}</td>
+                <td>{{ "%.1f"|format(g.quality_score) }}</td>
+                <td>{{ "%.1f"|format(g.human_score) }}</td>
+                <td>{{ "%.1f"|format(g.volume_score) }}</td>
+                <td>{{ g.created_at }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</article>
+{% endif %}
+
+<article>
+    <header>Conversaciones Recientes</header>
+    {% if conversations %}
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Tipo</th>
+                <th>Turnos</th>
+                <th>Iniciado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in conversations %}
+            <tr>
+                <td>#{{ c.id }}</td>
+                <td>{{ c.type }}</td>
+                <td>{{ c.turn_count }}</td>
+                <td>{{ c.started_at }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No hay conversaciones aún.</p>
+    {% endif %}
+</article>
+{% endblock %}

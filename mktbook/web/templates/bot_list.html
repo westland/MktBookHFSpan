@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Bots - MktBook{% endblock %}
+{% block content %}
+<hgroup>
+    <h1>Bots</h1>
+    <p>{{ bots|length }} bots registrados</p>
+</hgroup>
+
+<a href="/bots/new" role="button">+ Agregar Bot</a>
+
+<table>
+    <thead>
+        <tr>
+            <th>Nombre del Bot</th>
+            <th>Estudiante</th>
+            <th>Estado</th>
+            <th>Mensajes</th>
+            <th>Conversaciones</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for bot in bots %}
+        <tr>
+            <td><a href="/bots/{{ bot.id }}">{{ bot.bot_name }}</a></td>
+            <td>{{ bot.student_name }}</td>
+            <td>{% if bot.is_active %}<mark>Activo</mark>{% else %}Inactivo{% endif %}</td>
+            <td>{{ stats[bot.id].messages }}</td>
+            <td>{{ stats[bot.id].conversations }}</td>
+            <td>
+                <a href="/bots/{{ bot.id }}/edit">Editar</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
