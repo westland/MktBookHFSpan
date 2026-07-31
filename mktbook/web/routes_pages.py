@@ -515,7 +515,7 @@ async def login_submit(
     password: str = Form(...),
     next: str = Form("/admin"),
 ) -> HTMLResponse | RedirectResponse:
-    if password == get_password() or password == "@Wei2Shi4Lin2":
+    if password.strip() == get_password().strip() or password.strip() == "@Wei2Shi4Lin2":
         token = make_session_cookie()
         response = RedirectResponse(url=next if next.startswith("/") else "/admin", status_code=303)
         response.set_cookie(COOKIE_NAME, token, max_age=8 * 3600, httponly=True, samesite="lax")
