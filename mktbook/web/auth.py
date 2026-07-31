@@ -22,7 +22,9 @@ def get_password() -> str:
     """Return the current admin password (file override beats config default)."""
     try:
         pw = _PASSWORD_FILE.read_text().strip()
-        return pw if pw else settings.admin_password
+        if pw == "mktbook" or not pw:
+            return settings.admin_password
+        return pw
     except OSError:
         return settings.admin_password
 
