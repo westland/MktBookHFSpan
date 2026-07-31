@@ -696,6 +696,8 @@ async def bot_form_update(
 
 @router.get("/grading", response_class=HTMLResponse)
 async def grading_page(request: Request) -> HTMLResponse:
+    if not is_authenticated(request):
+        return redirect_to_login("/grading")
     grades = await queries.get_latest_grades()
     bots = {b.id: b for b in await queries.get_all_bots()}
     enriched = []

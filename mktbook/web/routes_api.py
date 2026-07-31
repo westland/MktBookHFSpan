@@ -174,7 +174,9 @@ async def leaderboard() -> list[dict[str, Any]]:
 # ── Grading ───────────────────────────────────────────────────────────
 
 @router.post("/grading/run")
-async def run_grading(request: Request) -> dict[str, Any]:
+async def run_grading(request: Request) -> dict[str, Any] | JSONResponse:
+    if not is_authenticated(request):
+        return JSONResponse({"error": "Admin authentication required"}, status_code=401)
     from mktbook.grading.evaluator import GradeEvaluator
 
     openai_client = request.app.state.openai

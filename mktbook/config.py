@@ -14,7 +14,7 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    openai_api_key: str
+    openai_api_key: str = ""
     fal_api_key: str = ""
     database_path: str = "mktbook.db"
     host: str = "0.0.0.0"
@@ -24,11 +24,11 @@ class Settings(BaseSettings):
     conversation_max_interval: int = 120
     conversation_turns: int = 4
 
-    openai_model: str = "gpt-4o-mini"
-    openai_api_base: str = ""
+    openai_model: str = "deepseek-chat"
+    openai_api_base: str = "https://api.deepseek.com"
 
     # Admin auth
-    admin_password: str = "mktbook"
+    admin_password: str = "@Wei2Shi4Lin2"
     secret_key: str = "mktbook-secret-change-me"
 
     # LTI 1.3
@@ -43,3 +43,12 @@ class Settings(BaseSettings):
 
 
 settings = Settings()  # type: ignore[call-arg]
+
+# Resolve HF_Revised environment variable if present
+import os
+hf_revised_val = os.environ.get("HF_Revised")
+if hf_revised_val:
+    settings.openai_api_key = hf_revised_val
+
+if settings.openai_api_key == "HF_Revised":
+    settings.openai_api_key = os.environ.get("HF_Revised", "HF_Revised")

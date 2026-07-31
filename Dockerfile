@@ -36,7 +36,7 @@ ENV PORT=7860
 ENV HOST=0.0.0.0
 ENV DATABASE_PATH=/app/mktbook.db
 ENV LTI_PRIVATE_KEY_PATH=/app/lti_private_key.pem
-ENV OPENAI_API_KEY="sk-0be8c59c2c0043dcab3a903b39422ce1"
+ENV OPENAI_API_KEY="HF_Revised"
 ENV OPENAI_API_BASE="https://api.deepseek.com"
 ENV OPENAI_MODEL="deepseek-chat"
 
