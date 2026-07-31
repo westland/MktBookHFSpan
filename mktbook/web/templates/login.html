@@ -28,8 +28,11 @@
                 <input type="hidden" name="next" value="{{ next }}">
                 <label>
                     Contraseña
-                    <input type="password" name="password" autofocus required
-                           placeholder="Introduce la contraseña de administrador">
+                    <div style="position: relative; display: flex; align-items: center; margin-top: 0.25rem; margin-bottom: 1rem;">
+                        <input id="password-input" type="password" name="password" autofocus required
+                               placeholder="Introduce la contraseña de administrador" style="padding-right: 2.5rem; margin-bottom: 0; width: 100%;">
+                        <span id="toggle-password" style="position: absolute; right: 0.75rem; cursor: pointer; user-select: none; font-size: 1.25rem;" onclick="togglePasswordVisibility()">👁️</span>
+                    </div>
                 </label>
                 <button type="submit" style="width:100%;">Iniciar Sesión</button>
             </form>
@@ -39,5 +42,18 @@
             Simulador de Mercado de Bots MktBook
         </p>
     </main>
+    <script>
+        function togglePasswordVisibility() {
+            const input = document.getElementById("password-input");
+            const toggle = document.getElementById("toggle-password");
+            if (input.type === "password") {
+                input.type = "text";
+                toggle.textContent = "🙈";
+            } else {
+                input.type = "password";
+                toggle.textContent = "👁️";
+            }
+        }
+    </script>
 </body>
 </html>
