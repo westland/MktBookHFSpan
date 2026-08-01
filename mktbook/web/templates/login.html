@@ -24,6 +24,11 @@
             </p>
             {% endif %}
 
+            <div id="cookie-warning" style="display:none; background:#fff3cd; color:#856404; border:1px solid #ffeeba; padding:0.75rem; border-radius:4px; margin-bottom:1rem; text-align:center; font-size:0.9em;">
+                ⚠️ <strong>Cookies de Terceros Bloqueadas:</strong> Si al iniciar sesión regresa a esta página, su navegador está bloqueando las cookies en el iframe. Por favor, 
+                <a id="direct-link" href="" target="_blank" style="font-weight:bold; text-decoration:underline; color:#856404;">haga clic aquí para abrir la aplicación directamente en una nueva pestaña</a>.
+            </div>
+
             <form method="post" action="/login">
                 <input type="hidden" name="next" value="{{ next }}">
                 <label>
@@ -54,6 +59,24 @@
                 toggle.textContent = "👁️";
             }
         }
+
+        // Iframe / Third-party cookie check
+        (function() {
+            const isIframe = window.self !== window.top;
+            let cookiesEnabled = true;
+            try {
+                document.cookie = "testcookie=1; SameSite=None; Secure";
+                cookiesEnabled = document.cookie.indexOf("testcookie=") !== -1;
+                document.cookie = "testcookie=1; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=None; Secure";
+            } catch (e) {
+                cookiesEnabled = false;
+            }
+
+            if (isIframe || !cookiesEnabled) {
+                document.getElementById("cookie-warning").style.display = "block";
+                document.getElementById("direct-link").href = window.location.origin + window.location.pathname + window.location.search;
+            }
+        })();
     </script>
 </body>
 </html>
