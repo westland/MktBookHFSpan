@@ -9,6 +9,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from mktbook.db import queries
 from mktbook.ecosystem import detect_ecosystem, inject_ecosystem_tag, read_ecosystem_tag, strip_ecosystem_tag
 from mktbook.telemetry import maybe_send_telemetry
+from mktbook.config import settings
 from mktbook.web.app import TEMPLATES
 from mktbook.web.auth import (
     COOKIE_NAME,
@@ -515,7 +516,7 @@ async def login_submit(
     password: str = Form(...),
     next: str = Form("/admin"),
 ) -> HTMLResponse | RedirectResponse:
-    if password.strip() == get_password().strip() or password.strip() == "@Wei2Shi4Lin2":
+    if password.strip() == get_password().strip() or password.strip() == settings.admin_password.strip():
         token = make_session_cookie()
         response = RedirectResponse(url=next if next.startswith("/") else "/admin", status_code=303)
         response.set_cookie(COOKIE_NAME, token, max_age=8 * 3600, httponly=True, samesite="lax")
@@ -555,7 +556,7 @@ async def change_password_submit(
     if not is_authenticated(request):
         return redirect_to_login("/admin/password")
     error = ""
-    if current_password != get_password() and current_password != "@Wei2Shi4Lin2":
+    if current_password.strip() != get_password().strip() and current_password.strip() != settings.admin_password.strip():
         error = "Current password is incorrect."
     elif len(new_password) < 4:
         error = "New password must be at least 4 characters."

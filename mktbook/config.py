@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     openai_api_base: str = "https://api.deepseek.com"
 
     # Admin auth
-    admin_password: str = "@Wei2Shi4Lin2"
+    admin_password: str = "mktbook"
     secret_key: str = "mktbook-secret-change-me"
 
     # LTI 1.3
