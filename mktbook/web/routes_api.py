@@ -173,7 +173,7 @@ async def leaderboard() -> list[dict[str, Any]]:
 
 # ── Grading ───────────────────────────────────────────────────────────
 
-@router.post("/grading/run")
+@router.post("/grading/run", response_model=None)
 async def run_grading(request: Request) -> dict[str, Any] | JSONResponse:
     if not is_authenticated(request):
         return JSONResponse({"error": "Admin authentication required"}, status_code=401)
