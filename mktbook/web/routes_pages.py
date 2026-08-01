@@ -519,7 +519,7 @@ async def login_submit(
     if password.strip() == get_password().strip() or password.strip() == settings.admin_password.strip():
         token = make_session_cookie()
         response = RedirectResponse(url=next if next.startswith("/") else "/admin", status_code=303)
-        response.set_cookie(COOKIE_NAME, token, max_age=8 * 3600, httponly=True, samesite="lax")
+        response.set_cookie(COOKIE_NAME, token, max_age=8 * 3600, httponly=True, samesite="none", secure=True)
         return response
     return TEMPLATES.TemplateResponse("login.html", {
         "request": request,
